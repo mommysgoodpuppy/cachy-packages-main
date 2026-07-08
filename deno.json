@@ -1,0 +1,10 @@
+{
+  "tasks": {
+    "check": "deno run scripts/package.ts check",
+    "build": "deno run scripts/package.ts build",
+    "install": "deno run scripts/package.ts install"
+  },
+  "fmt": {
+    "lineWidth": 100
+  }
+}

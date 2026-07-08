@@ -1,0 +1,21 @@
+repo/
+.env
+
+# makepkg local build output
+packages/*/.SRCINFO
+packages/*/src/
+packages/*/pkg/
+packages/*/*.pkg.tar*
+packages/*/*.src.tar*
+
+# downloaded source artifacts when SRCDEST is not set
+*.deb
+*.rpm
+*.tar.gz
+*.tar.gz.sig
+*.tar.xz
+*.tar.zst
+*.sig
+
+versions.txt
+ollamainstall.sh

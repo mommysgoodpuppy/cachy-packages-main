@@ -1,0 +1,42 @@
+pkgname=visual-studio-code-bin
+pkgver="1.128.0"
+pkgrel="1"
+pkgdesc="Visual Studio Code official binary build"
+arch=('x86_64')
+url="https://code.visualstudio.com"
+license=('custom: commercial')
+depends=(
+  'alsa-lib'
+  'gcc-libs'
+  'glibc'
+  'gnupg'
+  'gtk3'
+  'libnotify'
+  'libsecret'
+  'libxkbfile'
+  'libxss'
+  'lsof'
+  'nss'
+  'shared-mime-info'
+  'xdg-utils'
+)
+provides=('code' 'vscode')
+conflicts=('code')
+options=('!strip')
+
+source=(
+  "code_${pkgver}_amd64.deb::https://update.code.visualstudio.com/${pkgver}/linux-deb-x64/stable"
+)
+sha256sums=('ee7ff012cf872e497d665486e56c5b1a12e36cca0c07c97887c997cbfdc797b1')
+
+package() {
+  bsdtar -xf data.tar.xz -C "${pkgdir}"
+
+  install -dm755 "${pkgdir}/usr/bin"
+  ln -sf /usr/share/code/bin/code "${pkgdir}/usr/bin/code"
+
+  sed -i -e 's/^\(Exec=\)[^ ]*/\1code/g' \
+    "${pkgdir}"/usr/share/applications/*.desktop
+
+  chmod u-s "${pkgdir}/usr/share/code/chrome-sandbox"
+}
