@@ -11,10 +11,15 @@ type LoadedPackage = {
 const root = await Deno.realPath(`${import.meta.dirname}/..`);
 const packagesDir = `${root}/packages`;
 const repoDir = `${root}/repo`;
+const repoName = "cachy-packages-main";
+const repoDatabase = `${repoDir}/${repoName}.db.tar.gz`;
+const pacmanConfig = "/etc/pacman.conf";
 const sourceDir = "/tmp/local-reviewed-package-sources";
 
 function usage(packageNames: string[] = []): never {
-  console.error("Usage: deno task <check|build|install> <package> [--keep-build]");
+  console.error("Usage:");
+  console.error("  deno task <check|build|install> <package> [--keep-build]");
+  console.error("  deno task setup-repo");
   if (packageNames.length) console.error(`Packages: ${packageNames.join(", ")}`);
   Deno.exit(2);
 }
@@ -142,14 +147,80 @@ async function buildPackage(pkg: LoadedPackage): Promise<string[]> {
   return archives;
 }
 
+async function updateRepoDatabase(archives: string[]): Promise<void> {
+  await run("repo-add", [repoDatabase, ...archives]);
+}
+
+async function isRepoConfigured(): Promise<boolean> {
+  try {
+    const repos = await output("pacman-conf", ["--repo-list"]);
+    return repos.split("\n").includes(repoName);
+  } catch {
+    return false;
+  }
+}
+
+async function setupLocalRepo(): Promise<void> {
+  await Deno.mkdir(repoDir, { recursive: true });
+  const hasRepoDatabase = await Deno.stat(repoDatabase).then(() => true).catch((error) => {
+    if (error instanceof Deno.errors.NotFound) return false;
+    throw error;
+  });
+  if (!hasRepoDatabase && !(await isRepoConfigured())) {
+    throw new Error(
+      `${repoDatabase} does not exist yet. Run deno task build <package> first, ` +
+        "then run deno task setup-repo.",
+    );
+  }
+
+  if (await isRepoConfigured()) {
+    console.log(`${repoName} is already configured in pacman.`);
+  } else {
+    const config = await Deno.readTextFile(pacmanConfig);
+    const stanza = [
+      "",
+      `[${repoName}]`,
+      "SigLevel = Optional TrustAll",
+      `Server = file://${repoDir}`,
+      "",
+    ].join("\n");
+    const updatedConfig = `${config.trimEnd()}\n${stanza}`;
+    const tempConfig = await Deno.makeTempFile({ prefix: `${repoName}-`, suffix: ".conf" });
+    await Deno.writeTextFile(tempConfig, updatedConfig);
+    try {
+      await run("sudo", ["install", "-m", "644", tempConfig, pacmanConfig]);
+    } finally {
+      await Deno.remove(tempConfig).catch((error) => {
+        if (!(error instanceof Deno.errors.NotFound)) throw error;
+      });
+    }
+    console.log(`Added ${repoName} to ${pacmanConfig}.`);
+  }
+
+  if (hasRepoDatabase) {
+    await run("sudo", ["pacman", "-Sy"]);
+  } else {
+    console.warn(
+      `${repoDatabase} does not exist yet. Run deno task build <package> to create it, ` +
+        "then run deno task setup-repo again or sudo pacman -Sy.",
+    );
+  }
+}
+
 const [action, target, ...extra] = Deno.args;
-const keepBuild = extra.includes("--keep-build") || Deno.env.get("KEEP_BUILD_OUTPUT") === "1";
+const keepBuild = extra.includes("--keep-build");
 if (
-  extra.some((arg) => arg !== "--keep-build") || !target ||
-  !["check", "build", "install"].includes(action)
+  extra.some((arg) => arg !== "--keep-build") ||
+  (action === "setup-repo" ? target || extra.length : !target) ||
+  !["check", "build", "install", "setup-repo"].includes(action)
 ) usage();
 
 try {
+  if (action === "setup-repo") {
+    await setupLocalRepo();
+    Deno.exit(0);
+  }
+
   const packages = await loadPackages();
   const pkg = packages.find((candidate) =>
     candidate.name === target || candidate.module.aliases.includes(target)
@@ -160,8 +231,19 @@ try {
   if (action === "check") Deno.exit(0);
   try {
     const archives = await buildPackage(pkg);
+    await updateRepoDatabase(archives);
     archives.forEach((archive) => console.log(`Built ${archive}`));
-    if (action === "install") await run("sudo", ["pacman", "-U", ...archives]);
+    if (action === "install") {
+      if (await isRepoConfigured()) {
+        await run("sudo", ["pacman", "-Sy", `${repoName}/${pkg.name}`]);
+      } else {
+        console.warn(
+          `${repoName} is not configured in pacman; falling back to pacman -U. ` +
+            "The package will still appear in pacman -Qm until the local repo is configured.",
+        );
+        await run("sudo", ["pacman", "-U", ...archives]);
+      }
+    }
   } finally {
     if (!keepBuild) await cleanupBuildOutput(pkg);
   }

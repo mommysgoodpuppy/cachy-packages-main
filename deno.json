@@ -2,7 +2,8 @@
   "tasks": {
     "check": "deno run scripts/package.ts check",
     "build": "deno run scripts/package.ts build",
-    "install": "deno run scripts/package.ts install"
+    "install": "deno run scripts/package.ts install",
+    "setup-repo": "deno run scripts/package.ts setup-repo"
   },
   "fmt": {
     "lineWidth": 100

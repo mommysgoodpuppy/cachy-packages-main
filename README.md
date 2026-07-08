@@ -1,11 +1,51 @@
 # Local reviewed packages
 
-Small, self-managed Arch packages for software we do not want to source from the AUR. It currently
-contains the pinned official VS Code binary package.
+Small, self-managed Arch packages for software we do not want to source from the AUR.
+
+Current package definitions:
+
+- `visual-studio-code-bin`
+- `android-apktool`
+- `steamvr-linux-fixes-layer-bin`
+
+The goal is to move selected `pacman -Qm` packages here as small, reviewed, pinned definitions and
+eventually stop depending on AUR helpers for routine package installs.
 
 ## Install or update VS Code
 
 Required tools: Deno, `base-devel`, `pacman-contrib`, and `libarchive`.
+
+## One-time local repo setup
+
+Packages installed with `pacman -U` still show up in `pacman -Qm`, because pacman only considers a
+package non-foreign when it exists in a configured sync repository. Build at least one package first
+so the local repo database exists:
+
+```bash
+deno task build vscode
+```
+
+Then run this once to add the local repo to `/etc/pacman.conf` and sync pacman's databases:
+
+```bash
+deno task setup-repo
+```
+
+The task appends this stanza if it is not already configured:
+
+```ini
+[cachy-packages-main]
+SigLevel = Optional TrustAll
+Server = file:///home/ellie/git/cachy-packages-main/repo
+```
+
+The task refuses to add the stanza until `repo/cachy-packages-main.db.tar.gz` exists, because a
+configured file repo without a database can break normal pacman syncs.
+
+`deno task build <package>` updates `repo/cachy-packages-main.db.tar.gz` with `repo-add`.
+`deno task install <package>` installs through `pacman -S cachy-packages-main/<package>` when the
+repo is configured. If it is not configured, it falls back to `pacman -U` and the package remains
+visible in `pacman -Qm`.
 
 ```bash
 cd /home/ellie/git/cachy-packages-main

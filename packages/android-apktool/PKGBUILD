@@ -1,0 +1,23 @@
+pkgname=android-apktool
+pkgver="3.0.1"
+pkgrel="1"
+pkgdesc="A tool for reengineering Android apk files"
+arch=('any')
+url="https://github.com/iBotPeaches/Apktool"
+license=('Apache-2.0')
+depends=('java-runtime')
+
+source=("apktool_${pkgver}.jar::https://github.com/iBotPeaches/Apktool/releases/download/v${pkgver}/apktool_${pkgver}.jar")
+sha256sums=('b947b945b4bc455609ba768d071b64d9e63834079898dbaae15b67bf03bcd362')
+
+package() {
+  install -Dm644 "${srcdir}/apktool_${pkgver}.jar" "${pkgdir}/usr/share/android-apktool/apktool.jar"
+
+  install -dm755 "${pkgdir}/usr/bin" "${pkgdir}/usr/share/android-apktool"
+  cat > "${pkgdir}/usr/share/android-apktool/apktool" <<'EOF'
+#!/bin/sh
+exec java -Xmx1024M -Dfile.encoding=utf-8 -jar /usr/share/android-apktool/apktool.jar "$@"
+EOF
+  chmod 755 "${pkgdir}/usr/share/android-apktool/apktool"
+  ln -sf /usr/share/android-apktool/apktool "${pkgdir}/usr/bin/apktool"
+}
