@@ -6,7 +6,10 @@ Current package definitions:
 
 - `visual-studio-code-bin`
 - `android-apktool`
+- `llama.cpp-hip`
+- `lmstudio-bin`
 - `steamvr-linux-fixes-layer-bin`
+- `t3-code`
 
 The goal is to move selected `pacman -Qm` packages here as small, reviewed, pinned definitions and
 eventually stop depending on AUR helpers for routine package installs.

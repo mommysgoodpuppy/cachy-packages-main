@@ -1,29 +1,22 @@
 import type { PackageModule } from "../../scripts/package-module.ts";
+import {
+  fetchUserAgentHeaders,
+  pkgbuildField,
+  setPkgverAndResetPkgrel,
+} from "../../scripts/package-utils.ts";
 
 const releasesUrl = "https://update.code.visualstudio.com/api/releases/stable";
-
-function field(text: string, name: string): string {
-  const match = text.match(new RegExp(`^${name}=["']?([^"'\\n]+)`, "m"));
-  if (!match) throw new Error(`${name} not found in PKGBUILD`);
-  return match[1];
-}
-
-function replaceField(text: string, name: string, value: string): string {
-  const pattern = new RegExp(`^${name}=["']?[^"'\\n]+["']?$`, "m");
-  if (!pattern.test(text)) throw new Error(`${name} not found in PKGBUILD`);
-  return text.replace(pattern, `${name}="${value}"`);
-}
 
 const vscode: PackageModule = {
   aliases: ["vscode"],
 
   currentVersion(pkgbuild: string): string {
-    return field(pkgbuild, "pkgver");
+    return pkgbuildField(pkgbuild, "pkgver");
   },
 
   async latestVersion(): Promise<string> {
     const response = await fetch(releasesUrl, {
-      headers: { "user-agent": "local-reviewed-packages" },
+      headers: fetchUserAgentHeaders(),
     });
     if (!response.ok) {
       throw new Error(`VS Code release lookup failed: HTTP ${response.status}`);
@@ -39,8 +32,7 @@ const vscode: PackageModule = {
   },
 
   updatePkgbuild(pkgbuild: string, latestVersion: string): string {
-    const updated = replaceField(pkgbuild, "pkgver", latestVersion);
-    return replaceField(updated, "pkgrel", "1");
+    return setPkgverAndResetPkgrel(pkgbuild, latestVersion);
   },
 };
 

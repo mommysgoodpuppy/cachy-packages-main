@@ -1,0 +1,36 @@
+pkgname=lmstudio-bin
+pkgver="0.4.19"
+pkgrel="2"
+pkgdesc="LM Studio desktop app for exploring and running local language models"
+arch=('x86_64')
+url="https://lmstudio.ai"
+license=('EULA')
+depends=('fuse2' 'zlib' 'hicolor-icon-theme' 'gtk3' 'nss' 'libxcrypt-compat')
+provides=('lmstudio')
+conflicts=('lmstudio')
+options=('!strip')
+
+source=("LM-Studio-${pkgver}-${pkgrel}-x64.AppImage::https://installers.lmstudio.ai/linux/x64/${pkgver}-${pkgrel}/LM-Studio-${pkgver}-${pkgrel}-x64.AppImage")
+sha256sums=('911f3855161b28e622f18e3de3f285ac8c336caea7c128a8ac891a2092437872')
+
+package() {
+  install -Dm755 "${srcdir}/LM-Studio-${pkgver}-${pkgrel}-x64.AppImage" \
+    "${pkgdir}/opt/lm-studio/lm-studio.AppImage"
+  install -dm755 "${pkgdir}/usr/bin"
+  ln -sf /opt/lm-studio/lm-studio.AppImage "${pkgdir}/usr/bin/lm-studio"
+
+  install -Dm644 /dev/stdin "${pkgdir}/usr/share/applications/lmstudio.desktop" <<'EOF'
+[Desktop Entry]
+Name=LM Studio
+GenericName=Large Language Model Studio
+Comment=Desktop app for exploring and running local language models
+Exec=lm-studio %U
+Icon=lm-studio
+Type=Application
+Categories=Development;ArtificialIntelligence;
+Terminal=false
+StartupNotify=true
+StartupWMClass=LM Studio
+MimeType=text/plain;
+EOF
+}
