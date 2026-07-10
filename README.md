@@ -8,6 +8,8 @@ Current package definitions:
 - `android-apktool`
 - `llama.cpp-hip`
 - `lmstudio-bin`
+- `openai-codex-bin`
+- `openai-chatgpt-desktop`
 - `steamvr-linux-fixes-layer-bin`
 - `t3-code`
 
@@ -28,7 +30,7 @@ so the local repo database exists:
 deno task build vscode
 ```
 
-Then run this once to add the local repo to `/etc/pacman.conf` and sync pacman's databases:
+Then run this once to add the local repo to `/etc/pacman.conf`:
 
 ```bash
 deno task setup-repo
@@ -46,36 +48,57 @@ The task refuses to add the stanza until `repo/cachy-packages-main.db.tar.gz` ex
 configured file repo without a database can break normal pacman syncs.
 
 `deno task build <package>` updates `repo/cachy-packages-main.db.tar.gz` with `repo-add`.
-`deno task install <package>` installs through `pacman -S cachy-packages-main/<package>` when the
-repo is configured. If it is not configured, it falls back to `pacman -U` and the package remains
-visible in `pacman -Qm`.
+`deno task install <package>` refreshes only this local repository through a temporary pacman
+configuration, then installs `cachy-packages-main/<package>`. It does not refresh or partially
+upgrade official repositories.
 
 ```bash
 cd /home/ellie/git/cachy-packages-main
 deno task install vscode
 ```
 
-That single command:
+That command checks the selected package's upstream version, updates its pinned source/checksums
+when needed, builds it, adds it to the local repository, then asks for sudo access and pacman's
+confirmation before installing or upgrading it.
 
-1. checks Microsoft's official stable release endpoint;
-2. updates the pinned PKGBUILD and SHA-256 checksums when needed;
-3. builds the package locally; and
-4. asks for sudo access and pacman's confirmation before installing or upgrading it.
+## Update
+
+`update` refreshes a package definition from upstream. When that package is already installed, it
+also builds and installs the result through the local repository:
+
+```bash
+deno task update vscode
+```
+
+When the package is not installed, `update` only changes its definition. A generated SHA-256 pins
+later builds, but does not independently authenticate the first download. Prefer upstream
+signatures or published checksums where available.
+
+To update every package definition that is already installed on this machine:
+
+```bash
+deno task update all
+```
+
+It skips package definitions not present in the installed package database. It builds and installs a
+selected package only when its upstream version changed. `build` is the explicit pinned-source build
+command; `install` always refreshes the selected definition before building and installing it.
 
 No Deno permissions are granted in advance. Deno prompts when a package module requests network,
 filesystem, or command execution access, so review each requested permission before accepting it.
-Package modules cannot silently inherit `-A` or broad default `--allow-*` flags from these tasks.
+The runner reads the static `export const aliases = [...]` declaration from every `package.ts` for
+discovery, then imports only the selected package module. Package modules cannot silently inherit
+`-A` or broad default `--allow-*` flags from these tasks.
 
 Downloaded source artifacts are cached under `/tmp/local-reviewed-package-sources`. Built package
 archives are written to `repo/`. `src/` and `pkg/` build directories are removed automatically after
 `build` or `install`; pass `--keep-build` to keep them for debugging.
 
-Package-specific update logic lives beside its PKGBUILD, for example
-`packages/visual-studio-code-bin/package.ts`. The root CLI discovers these modules and provides the
-common check, build, and install workflow, so adding a package does not require editing
+Each package has a `PKGBUILD` and package-specific `package.ts` update logic. The root CLI reads
+the static alias export without executing updater code, so adding a package does not require editing
 `scripts/package.ts`.
 
-To update and build without installing:
+To build the reviewed, pinned package without installing:
 
 ```bash
 deno task build vscode

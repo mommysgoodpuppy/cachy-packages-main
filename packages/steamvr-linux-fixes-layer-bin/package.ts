@@ -5,8 +5,10 @@ import {
   setPkgverAndResetPkgrel,
 } from "../../scripts/package-utils.ts";
 
+export const aliases = ["steamvr-linux-fixes", "steamvr-fixes"];
+
 const steamvrLinuxFixes: PackageModule = {
-  aliases: ["steamvr-linux-fixes", "steamvr-fixes"],
+  aliases,
 
   currentVersion(pkgbuild: string): string {
     return pkgbuildField(pkgbuild, "pkgver");

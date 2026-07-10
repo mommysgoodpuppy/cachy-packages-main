@@ -5,8 +5,10 @@ import {
   setPkgverAndResetPkgrel,
 } from "../../scripts/package-utils.ts";
 
+export const aliases = ["t3code"];
+
 const t3Code: PackageModule = {
-  aliases: ["t3code"],
+  aliases,
 
   currentVersion(pkgbuild: string): string {
     return pkgbuildField(pkgbuild, "pkgver");

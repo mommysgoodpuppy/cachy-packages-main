@@ -3,9 +3,11 @@ import {
   fetchUserAgentHeaders,
   pkgbuildField,
   replacePkgbuildField,
+  setPkgverAndResetPkgrel,
 } from "../../scripts/package-utils.ts";
 
 const latestUrl = "https://lmstudio.ai/download/latest/linux/x64";
+export const aliases = ["lmstudio", "lm-studio"];
 
 function versionFromUrl(url: string): string {
   const match = url.match(/\/(\d+\.\d+\.\d+)-(\d+)\/LM-Studio-\1-\2-x64\.AppImage$/);
@@ -14,10 +16,10 @@ function versionFromUrl(url: string): string {
 }
 
 const lmstudio: PackageModule = {
-  aliases: ["lmstudio", "lm-studio"],
+  aliases,
 
   currentVersion(pkgbuild: string): string {
-    return `${pkgbuildField(pkgbuild, "pkgver")}-${pkgbuildField(pkgbuild, "pkgrel")}`;
+    return `${pkgbuildField(pkgbuild, "pkgver")}-${pkgbuildField(pkgbuild, "_build")}`;
   },
 
   async latestVersion(): Promise<string> {
@@ -33,10 +35,10 @@ const lmstudio: PackageModule = {
   },
 
   updatePkgbuild(pkgbuild: string, latestVersion: string): string {
-    const [pkgver, pkgrel] = latestVersion.split("-");
-    if (!pkgver || !pkgrel) throw new Error(`Invalid LM Studio version ${latestVersion}`);
-    const updated = replacePkgbuildField(pkgbuild, "pkgver", pkgver);
-    return replacePkgbuildField(updated, "pkgrel", pkgrel);
+    const [pkgver, build] = latestVersion.split("-");
+    if (!pkgver || !build) throw new Error(`Invalid LM Studio version ${latestVersion}`);
+    const updated = setPkgverAndResetPkgrel(pkgbuild, pkgver);
+    return replacePkgbuildField(updated, "_build", build);
   },
 };
 

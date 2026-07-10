@@ -12,7 +12,8 @@ updating, building, and optionally installing them.
   flags so it prompts the user when code requests privileged access.
 - Treat this repo as a local package authoring repo.
 - Keep one package per directory under `packages/<pkgname>/`.
-- Each package should include a pinned `PKGBUILD` and package-specific `package.ts`.
+- Each package should include a pinned `PKGBUILD` and package-specific `package.ts`. Export aliases
+  as a one-line JSON string array: `export const aliases = ["example"]`.
 - Treat `.SRCINFO`, `src/`, `pkg/`, and `repo/` contents as generated output.
 - Pin upstream versions and checksums. Do not use dynamic download/install scripts.
 - Do not download during `package()`. All sources must be declared in `source=()`.
@@ -91,16 +92,19 @@ This only checks current pinned versions against upstream metadata.
 To update package files locally:
 
 ```bash
-deno task build vscode
+deno task update vscode
 ```
 
-The build task edits version fields when needed, runs `updpkgsums`, builds the pinned package, and
-removes `src/` and `pkg/` afterward. `deno task install vscode` additionally installs the resulting
-local archive after sudo and pacman confirmation. Neither task commits, pushes, or opens pull
-requests.
+`deno task update <package>` updates version fields when needed and runs `updpkgsums`. When the
+installed package has an upstream version change, it then builds and installs the result. `deno task
+update all` does this only for package definitions already installed on the machine. `deno task
+build <package>` builds the pinned package without changing its sources. `deno task install
+<package>` always refreshes the selected definition before building and installing through a
+temporary pacman config that refreshes only the local repository. Neither task commits, pushes, or
+opens pull requests.
 
-There is no hosted update or build automation. Run the scripts locally and review all generated
-changes before building the local repository.
+There is no hosted update or build automation. Run the scripts locally; package-definition changes
+remain in the working tree for normal git commit review.
 
 ## Agent Development
 

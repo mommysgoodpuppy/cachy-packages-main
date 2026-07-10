@@ -6,9 +6,10 @@ import {
 } from "../../scripts/package-utils.ts";
 
 const releasesUrl = "https://update.code.visualstudio.com/api/releases/stable";
+export const aliases = ["vscode"];
 
 const vscode: PackageModule = {
-  aliases: ["vscode"],
+  aliases,
 
   currentVersion(pkgbuild: string): string {
     return pkgbuildField(pkgbuild, "pkgver");

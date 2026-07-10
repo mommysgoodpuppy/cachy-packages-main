@@ -5,8 +5,10 @@ import {
   setPkgverAndResetPkgrel,
 } from "../../scripts/package-utils.ts";
 
+export const aliases = ["apktool"];
+
 const apktool: PackageModule = {
-  aliases: ["apktool"],
+  aliases,
 
   currentVersion(pkgbuild: string): string {
     return pkgbuildField(pkgbuild, "pkgver");

@@ -1,23 +1,52 @@
 pkgname=lmstudio-bin
 pkgver="0.4.19"
-pkgrel="2"
+_build="2"
+# Keep this above the old pkgrel=2 package while migrating the vendor build suffix out of pkgrel.
+pkgrel="3"
 pkgdesc="LM Studio desktop app for exploring and running local language models"
 arch=('x86_64')
 url="https://lmstudio.ai"
 license=('EULA')
 depends=('fuse2' 'zlib' 'hicolor-icon-theme' 'gtk3' 'nss' 'libxcrypt-compat')
+makedepends=('7zip')
 provides=('lmstudio')
 conflicts=('lmstudio')
 options=('!strip')
 
-source=("LM-Studio-${pkgver}-${pkgrel}-x64.AppImage::https://installers.lmstudio.ai/linux/x64/${pkgver}-${pkgrel}/LM-Studio-${pkgver}-${pkgrel}-x64.AppImage")
+source=("LM-Studio-${pkgver}-${_build}-x64.AppImage::https://installers.lmstudio.ai/linux/x64/${pkgver}-${_build}/LM-Studio-${pkgver}-${_build}-x64.AppImage")
 sha256sums=('911f3855161b28e622f18e3de3f285ac8c336caea7c128a8ac891a2092437872')
 
+prepare() {
+  local appimage="${srcdir}/LM-Studio-${pkgver}-${_build}-x64.AppImage"
+  local desktop_entry icon_name icon_path
+
+  rm -rf appimage-root
+  7z x -y "-o${srcdir}/appimage-root" "${appimage}" >/dev/null
+  desktop_entry="$(find appimage-root -type f -name '*.desktop' -print -quit)"
+  [[ -n "${desktop_entry}" ]] || {
+    echo "Could not find LM Studio desktop entry"
+    return 1
+  }
+  icon_name="$(sed -n 's/^Icon=//p' "${desktop_entry}" | head -n1)"
+  [[ -n "${icon_name}" ]] || {
+    echo "Could not find LM Studio icon name"
+    return 1
+  }
+  icon_path="$(find appimage-root -type f -name "${icon_name}.png" -print | sort -V | tail -n1)"
+  [[ -n "${icon_path}" ]] || {
+    echo "Could not find LM Studio icon ${icon_name}.png"
+    return 1
+  }
+  cp "${icon_path}" lmstudio.png
+}
+
 package() {
-  install -Dm755 "${srcdir}/LM-Studio-${pkgver}-${pkgrel}-x64.AppImage" \
+  install -Dm755 "${srcdir}/LM-Studio-${pkgver}-${_build}-x64.AppImage" \
     "${pkgdir}/opt/lm-studio/lm-studio.AppImage"
   install -dm755 "${pkgdir}/usr/bin"
   ln -sf /opt/lm-studio/lm-studio.AppImage "${pkgdir}/usr/bin/lm-studio"
+
+  install -Dm644 lmstudio.png "${pkgdir}/usr/share/icons/hicolor/512x512/apps/lmstudio.png"
 
   install -Dm644 /dev/stdin "${pkgdir}/usr/share/applications/lmstudio.desktop" <<'EOF'
 [Desktop Entry]
@@ -25,7 +54,7 @@ Name=LM Studio
 GenericName=Large Language Model Studio
 Comment=Desktop app for exploring and running local language models
 Exec=lm-studio %U
-Icon=lm-studio
+Icon=lmstudio
 Type=Application
 Categories=Development;ArtificialIntelligence;
 Terminal=false
