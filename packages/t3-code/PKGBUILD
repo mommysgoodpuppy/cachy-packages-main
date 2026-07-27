@@ -1,7 +1,7 @@
 pkgname=t3-code
-pkgver="0.0.28"
+pkgver="0.0.29.nightly.20260727.918"
 pkgrel="1"
-pkgdesc="Minimal web GUI for coding agents"
+pkgdesc="Minimal web GUI for coding agents (nightly build)"
 arch=('x86_64')
 url="https://github.com/pingdotgg/t3code"
 license=('MIT')
@@ -10,19 +10,19 @@ provides=('t3-code')
 conflicts=('t3-code-git')
 options=('!strip')
 
+_release_version="${pkgver/.nightly./-nightly.}"
+_release_tag="v${_release_version}"
 source=(
-  "T3-Code-${pkgver}-x86_64.AppImage::https://github.com/pingdotgg/t3code/releases/download/v${pkgver}/T3-Code-${pkgver}-x86_64.AppImage"
-  "LICENSE-${pkgver}::https://raw.githubusercontent.com/pingdotgg/t3code/v${pkgver}/LICENSE"
-  "t3-code.png::https://raw.githubusercontent.com/pingdotgg/t3code/v${pkgver}/apps/desktop/resources/icon.png"
+  "T3-Code-${_release_version}-x86_64.AppImage::${url}/releases/download/${_release_tag}/T3-Code-${_release_version}-x86_64.AppImage"
+  "LICENSE-${_release_tag}::https://raw.githubusercontent.com/pingdotgg/t3code/${_release_tag}/LICENSE"
+  "t3-code.png::https://raw.githubusercontent.com/pingdotgg/t3code/${_release_tag}/apps/desktop/resources/icon.png"
 )
-sha256sums=(
-  'fa6069fb03eb25157f1e96a29901dca81bb0a9970f5936ca255342556ec42e0a'
-  '935d8f2af0c703f9c39517ee57cc4930b19d02d533be930b63f0e82f93614b43'
-  'ad73005e78deedd38ac68a90fc6d7a3a1b9bf40e7820f86196ff71d7f68a72fc'
-)
+sha256sums=('7f7b612f1fba4b84234a1a42aaff0d8870b942c1ea71acda400f823251822900'
+            '935d8f2af0c703f9c39517ee57cc4930b19d02d533be930b63f0e82f93614b43'
+            'ad73005e78deedd38ac68a90fc6d7a3a1b9bf40e7820f86196ff71d7f68a72fc')
 
 package() {
-  install -Dm755 "${srcdir}/T3-Code-${pkgver}-x86_64.AppImage" \
+  install -Dm755 "${srcdir}/T3-Code-${_release_version}-x86_64.AppImage" \
     "${pkgdir}/opt/t3-code/t3-code.AppImage"
 
   install -dm755 "${pkgdir}/usr/bin"
@@ -41,5 +41,6 @@ StartupNotify=true
 EOF
 
   install -Dm644 "${srcdir}/t3-code.png" "${pkgdir}/usr/share/pixmaps/t3-code.png"
-  install -Dm644 "${srcdir}/LICENSE-${pkgver}" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  install -Dm644 "${srcdir}/LICENSE-${_release_tag}" \
+    "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }

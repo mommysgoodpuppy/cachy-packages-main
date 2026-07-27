@@ -19,3 +19,4 @@ packages/*/*.src.tar*
 
 versions.txt
 ollamainstall.sh
+research/

@@ -1,6 +1,6 @@
 pkgname=openai-chatgpt-desktop
-pkgver="26.707.31428"
-pkgrel="3"
+pkgver="26.721.41059"
+pkgrel="1"
 pkgdesc="OpenAI ChatGPT desktop app repackaged from the upstream macOS Electron archive"
 arch=('x86_64')
 url="https://chatgpt.com/download"
@@ -40,14 +40,12 @@ noextract=(
   "node-pty-${_node_pty_ver}.tgz"
   "node-addon-api-${_node_addon_api_ver}.tgz"
 )
-sha256sums=(
-  'ffdc351a507105d55d7464e3340302c758b8a54b926711c4b15bf373ccb47d64'
-  '61069dec76ed8d1c10ab6825b194bdf5a19b653286a7c2684b09c62681427446'
-  'ad0e29650140c49d0335b1d356596aa8166f12b758f418a98446130e3278f250'
-  'c7517f19083ddcb05f276904680eb2b11a6b5ecab778b8e4e5685a6d645b3f60'
-  'd12f07c8162283b6213551855f1da8dac162331374629830b5e640f130f07910'
-  '2a39939828ad1074912266be33c795698c95afd73097c8474769952d42992c26'
-)
+sha256sums=('e2b45056f3d1f8ab90f7f16249bfb5a40d09d0f8099f12ca0d8d7a8fdf9108ce'
+            '61069dec76ed8d1c10ab6825b194bdf5a19b653286a7c2684b09c62681427446'
+            'ad0e29650140c49d0335b1d356596aa8166f12b758f418a98446130e3278f250'
+            'c7517f19083ddcb05f276904680eb2b11a6b5ecab778b8e4e5685a6d645b3f60'
+            'd12f07c8162283b6213551855f1da8dac162331374629830b5e640f130f07910'
+            '2a39939828ad1074912266be33c795698c95afd73097c8474769952d42992c26')
 
 prepare() {
   cd "${srcdir}"

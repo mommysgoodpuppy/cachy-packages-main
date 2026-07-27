@@ -1,0 +1,51 @@
+pkgname=eyetrackvr-beta-bin
+pkgver="0.3.0.beta8"
+pkgrel="1"
+pkgdesc="Free and affordable VR eye tracking platform (beta binary release)"
+arch=('x86_64')
+url="https://github.com/EyeTrackVR/EyeTrackVR"
+license=('LicenseRef-Babble-Software-Distribution-License-1.0')
+depends=('glibc' 'zlib')
+provides=('eyetrackvr')
+conflicts=('eyetrackvr')
+options=('!strip')
+
+_release_version="${pkgver/.beta/-BETA-}"
+_release_tag="EyeTrackApp-${_release_version}"
+source=(
+  "EyeTrackVR-${_release_version}-linux-x86_64.tar.gz::${url}/releases/download/${_release_tag}/EyeTrackVR-${_release_version}-linux-x86_64.tar.gz"
+  "LICENSE-${_release_tag}::https://raw.githubusercontent.com/EyeTrackVR/EyeTrackVR/${_release_tag}/LICENSE"
+)
+sha256sums=(
+  '8f0f53dd01cd648bbbf65cfe3bea2ab134b4871e353d596b368efd03566af48c'
+  '88bec1dde0ff33748c5fe396905e8db3ca7f6c6788c27b070147d18d5af94c99'
+)
+
+package() {
+  local release_dir="${srcdir}/EyeTrackVR-${_release_version}"
+
+  install -Dm755 "${release_dir}/eyetrackvr" \
+    "${pkgdir}/opt/eyetrackvr/eyetrackvr"
+  cp -a "${release_dir}/_internal" "${pkgdir}/opt/eyetrackvr/"
+
+  install -dm755 "${pkgdir}/usr/bin"
+  ln -s /opt/eyetrackvr/eyetrackvr "${pkgdir}/usr/bin/eyetrackvr"
+
+  install -Dm644 "${release_dir}/_internal/Images/logo.png" \
+    "${pkgdir}/usr/share/pixmaps/eyetrackvr.png"
+  install -Dm644 /dev/stdin \
+    "${pkgdir}/usr/share/applications/eyetrackvr.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=EyeTrackVR Beta
+Comment=Open-source, affordable VR eye tracking
+Exec=eyetrackvr
+Icon=eyetrackvr
+Terminal=false
+Categories=Utility;Game;
+StartupWMClass=eyetrackvr
+EOF
+
+  install -Dm644 "${srcdir}/LICENSE-${_release_tag}" \
+    "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

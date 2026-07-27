@@ -1,6 +1,6 @@
 pkgname=llama.cpp-hip
 _pkgname="${pkgname%-hip}"
-pkgver="b9950"
+pkgver="b10043"
 pkgrel="1"
 pkgdesc="llama.cpp official ROCm binary build"
 arch=('x86_64')
@@ -13,7 +13,7 @@ options=('!strip')
 backup=('etc/conf.d/llama.cpp')
 
 source=("llama-${pkgver}-bin-ubuntu-rocm-7.2-x64.tar.gz::https://github.com/ggml-org/llama.cpp/releases/download/${pkgver}/llama-${pkgver}-bin-ubuntu-rocm-7.2-x64.tar.gz")
-sha256sums=('d81d58294fe0e1936014e75eff2ab4fa18424f001b44a8c6dae14f4e0eac552f')
+sha256sums=('584912b0d1f39bec00b885d8fc067816aa9affb8f9f1d7a05dd0537fb6382b6b')
 
 package() {
   local release_dir="${srcdir}/llama-${pkgver}"

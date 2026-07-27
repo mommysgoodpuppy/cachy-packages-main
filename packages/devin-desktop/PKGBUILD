@@ -1,0 +1,29 @@
+pkgname=devin-desktop
+pkgver="3.5.17"
+pkgrel="1"
+pkgdesc="A team of agents for every engineer — Devin Desktop"
+arch=('x86_64')
+url="https://devin.ai/desktop"
+license=('LicenseRef-Devin Desktop')
+depends=(
+  'alsa-lib'
+  'dbus'
+  'fd'
+  'gnupg'
+  'libnotify'
+  'libsecret'
+  'libxss'
+  'libxkbfile'
+  'ripgrep'
+  'xdg-utils'
+)
+options=('!strip')
+
+source=(
+  "https://windsurf-stable.codeiumdata.com/linux-x64-deb/stable/2c489dfc762456657db8662309c0d5e76e886397/Devin-linux-x64-3.5.17.deb"
+)
+sha256sums=('d5bfedb51e3325db91ab6450c11cf57171769548210b81960199afa5a286e954')
+
+package() {
+  bsdtar -xf data.tar.xz -C "${pkgdir}"
+}
