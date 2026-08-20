@@ -1,0 +1,3 @@
+# These are supplied by pacman and intentionally excluded from the private uv environment.
+torch==2.13.0
+triton==3.5.1

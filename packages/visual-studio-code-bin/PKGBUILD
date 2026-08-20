@@ -1,5 +1,5 @@
 pkgname=visual-studio-code-bin
-pkgver="1.129.1"
+pkgver="1.133.0"
 pkgrel="1"
 pkgdesc="Visual Studio Code official binary build"
 arch=('x86_64')
@@ -27,7 +27,7 @@ options=('!strip')
 source=(
   "code_${pkgver}_amd64.deb::https://update.code.visualstudio.com/${pkgver}/linux-deb-x64/stable"
 )
-sha256sums=('0cf912efe73db485839bda45cdcfe2ba35af3ad5876cc9786d9b04da2eb9ea51')
+sha256sums=('d064e87e22f556b8a91e1354b5227e340597324e52886dbb288551596b00e34a')
 
 package() {
   bsdtar -xf data.tar.xz -C "${pkgdir}"

@@ -26,6 +26,7 @@ const sourceDir = "/tmp/local-reviewed-package-sources";
 function usage(packageNames: string[] = []): never {
   console.error("Usage:");
   console.error("  deno task check <package>");
+  console.error("  deno task lock <package>");
   console.error("  deno task update <package|all>");
   console.error("  deno task build <package> [--keep-build]");
   console.error("  deno task install <package> [--keep-build]");
@@ -73,6 +74,11 @@ function isPackageModule(value: unknown): value is PackageModule {
     typeof candidate.currentVersion === "function" &&
     typeof candidate.latestVersion === "function" &&
     typeof candidate.updatePkgbuild === "function" &&
+    (candidate.lockedDependencyFiles == null ||
+      (Array.isArray(candidate.lockedDependencyFiles) &&
+        candidate.lockedDependencyFiles.every((file) => typeof file === "string"))) &&
+    (candidate.lockDependencies == null ||
+      typeof candidate.lockDependencies === "function") &&
     (candidate.validateBuiltPackage == null ||
       typeof candidate.validateBuiltPackage === "function");
 }
@@ -144,6 +150,10 @@ function resolvePackage(
 async function updatePackage(pkg: LoadedPackage): Promise<boolean> {
   const pkgbuildPath = `${pkg.directory}/PKGBUILD`;
   const originalPkgbuild = await Deno.readTextFile(pkgbuildPath);
+  const originalLockedFiles = new Map<string, string>();
+  for (const file of pkg.module.lockedDependencyFiles ?? []) {
+    originalLockedFiles.set(file, await Deno.readTextFile(`${pkg.directory}/${file}`));
+  }
   const current = pkg.module.currentVersion(originalPkgbuild);
   const latest = await pkg.module.latestVersion();
   console.log(`${pkg.name}: ${current} -> ${latest}`);
@@ -152,12 +162,16 @@ async function updatePackage(pkg: LoadedPackage): Promise<boolean> {
   await Deno.writeTextFile(pkgbuildPath, pkg.module.updatePkgbuild(originalPkgbuild, latest));
   try {
     await Deno.mkdir(sourceDir, { recursive: true });
+    await pkg.module.lockDependencies?.(pkg.directory, latest);
     await run("updpkgsums", [], {
       cwd: pkg.directory,
       env: { SRCDEST: sourceDir },
     });
   } catch (error) {
     await Deno.writeTextFile(pkgbuildPath, originalPkgbuild);
+    for (const [file, contents] of originalLockedFiles) {
+      await Deno.writeTextFile(`${pkg.directory}/${file}`, contents);
+    }
     throw error;
   }
   console.log(`${pkg.name}: updated pinned source version and checksums.`);
@@ -304,7 +318,7 @@ async function installFromLocalRepo(pkg: LoadedPackage): Promise<void> {
 
 const [action, target, ...extra] = Deno.args;
 const keepBuild = extra.includes("--keep-build");
-const validActions = ["check", "update", "build", "install", "setup-repo"];
+const validActions = ["check", "lock", "update", "build", "install", "setup-repo"];
 if (
   !action ||
   !validActions.includes(action) ||
@@ -341,9 +355,20 @@ try {
     await checkPackage(pkg);
     Deno.exit(0);
   }
+  if (action === "lock") {
+    if (!pkg.module.lockDependencies) {
+      throw new Error(`${pkg.name} does not manage locked language dependencies`);
+    }
+    const pkgbuild = await Deno.readTextFile(`${pkg.directory}/PKGBUILD`);
+    await pkg.module.lockDependencies(pkg.directory, pkg.module.currentVersion(pkgbuild));
+    await Deno.mkdir(sourceDir, { recursive: true });
+    await run("updpkgsums", [], { cwd: pkg.directory, env: { SRCDEST: sourceDir } });
+    Deno.exit(0);
+  }
   if (action === "update") {
     const updated = await updatePackage(pkg);
-    if (updated && (await installedPackageNames()).has(pkg.name)) {
+    const installed = await installedPackageNames();
+    if (updated && installed.has(pkg.name)) {
       await buildAndRegisterPackage(pkg, true, false);
     } else if (updated) {
       console.log(`${pkg.name} is not installed; updated its definition without building.`);

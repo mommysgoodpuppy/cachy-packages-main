@@ -1,0 +1,46 @@
+pkgname=llama.cpp-vulkan
+_pkgname="${pkgname%-vulkan}"
+pkgver="b10355"
+pkgrel="1"
+pkgdesc="llama.cpp official Vulkan binary build"
+arch=('x86_64')
+url="https://github.com/ggml-org/llama.cpp"
+license=('MIT')
+depends=('gcc-libs' 'glibc' 'vulkan-icd-loader' 'vulkan-driver')
+provides=("${_pkgname}" 'libggml' 'libggml-vulkan.so' 'ggml')
+conflicts=("${_pkgname}" 'llama.cpp-hip' 'libggml' 'ggml' 'stable-diffusion.cpp')
+options=('!strip')
+backup=('etc/conf.d/llama.cpp')
+
+source=("llama-${pkgver}-bin-ubuntu-vulkan-x64.tar.gz::https://github.com/ggml-org/llama.cpp/releases/download/${pkgver}/llama-${pkgver}-bin-ubuntu-vulkan-x64.tar.gz")
+sha256sums=('46de2a4a9370c1cda6d4f6b5b618416ede1cb052b175bdf016d0f0f544a2da11')
+
+package() {
+  local release_dir="${srcdir}/llama-${pkgver}"
+
+  install -dm755 "${pkgdir}/usr/bin" "${pkgdir}/usr/lib"
+  find "${release_dir}" -maxdepth 1 -type f -perm -111 ! -name '*.so*' -exec install -Dm755 '{}' "${pkgdir}/usr/bin/" ';'
+  cp -a "${release_dir}"/*.so* "${pkgdir}/usr/lib/"
+  ln -sf ggml-rpc-server "${pkgdir}/usr/bin/rpc-server"
+
+  install -Dm644 "${release_dir}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+
+  install -Dm644 /dev/stdin "${pkgdir}/etc/conf.d/llama.cpp" <<'EOF'
+LLAMA_ARGS=""
+EOF
+  install -Dm644 /dev/stdin "${pkgdir}/usr/lib/systemd/system/llama.cpp.service" <<'EOF'
+[Unit]
+Description=llama.cpp Server
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/conf.d/llama.cpp
+ExecStart=/usr/bin/llama-server $LLAMA_ARGS
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+}

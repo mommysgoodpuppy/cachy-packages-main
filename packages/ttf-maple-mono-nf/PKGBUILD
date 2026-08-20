@@ -1,0 +1,21 @@
+pkgname=ttf-maple-mono-nf
+pkgver="7.9"
+pkgrel="1"
+pkgdesc="Maple Mono with ligatures and Nerd Font icons"
+arch=('any')
+url="https://github.com/subframe7536/maple-font"
+license=('OFL-1.1')
+provides=('maplemono-nf' 'ttf-font')
+conflicts=('maplemono-nf')
+
+source=(
+  "MapleMono-NF-unhinted-${pkgver}.zip::${url}/releases/download/v${pkgver}/MapleMono-NF-unhinted.zip"
+)
+sha256sums=('8248d6260660be1066b5ebe90d25131582df8383f38db1c284dd1f2dc9d2b46e')
+
+package() {
+  install -Dm644 -t "${pkgdir}/usr/share/fonts/TTF" \
+    "${srcdir}"/MapleMono-NF-*.ttf
+  install -Dm644 "${srcdir}/LICENSE.txt" \
+    "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

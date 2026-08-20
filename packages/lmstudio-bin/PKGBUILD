@@ -1,8 +1,8 @@
 pkgname=lmstudio-bin
-pkgver="0.4.19"
+pkgver="0.4.21"
 _build="2"
 # Keep this above the old pkgrel=2 package while migrating the vendor build suffix out of pkgrel.
-pkgrel="3"
+pkgrel="1"
 pkgdesc="LM Studio desktop app for exploring and running local language models"
 arch=('x86_64')
 url="https://lmstudio.ai"
@@ -14,14 +14,15 @@ conflicts=('lmstudio')
 options=('!strip')
 
 source=("LM-Studio-${pkgver}-${_build}-x64.AppImage::https://installers.lmstudio.ai/linux/x64/${pkgver}-${_build}/LM-Studio-${pkgver}-${_build}-x64.AppImage")
-sha256sums=('911f3855161b28e622f18e3de3f285ac8c336caea7c128a8ac891a2092437872')
+sha256sums=('1014376d89d668c3814cd20e2b146a076146760ded1ef07b968fb61c58ded355')
 
 prepare() {
   local appimage="${srcdir}/LM-Studio-${pkgver}-${_build}-x64.AppImage"
   local desktop_entry icon_name icon_path
 
   rm -rf appimage-root
-  7z x -y "-o${srcdir}/appimage-root" "${appimage}" >/dev/null
+  7z x -y "-o${srcdir}/appimage-root" \
+    '-ir!*.desktop' '-ir!*.png' "${appimage}" >/dev/null
   desktop_entry="$(find appimage-root -type f -name '*.desktop' -print -quit)"
   [[ -n "${desktop_entry}" ]] || {
     echo "Could not find LM Studio desktop entry"

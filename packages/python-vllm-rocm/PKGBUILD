@@ -1,0 +1,88 @@
+pkgname=python-vllm-rocm
+_pkgname=vllm
+_gguf_plugin_ver="0.0.5"
+pkgver="0.27.1"
+pkgrel="2"
+pkgdesc="High-throughput LLM inference and serving engine with ROCm support"
+arch=('x86_64')
+url="https://github.com/vllm-project/vllm"
+license=('Apache-2.0')
+depends=(
+  'amdsmi'
+  'numactl'
+  'python'
+  'python-pytorch-opt-rocm=2.13.0'
+  'python-triton=3.5.1'
+  'rocblas'
+)
+makedepends=(
+  'clang'
+  'cmake'
+  'ninja'
+  'rust'
+  'uv'
+)
+provides=('python-vllm' 'vllm')
+conflicts=('python-vllm' 'python-vllm-cuda')
+options=('!lto')
+
+source=(
+  "${_pkgname}-${pkgver}.tar.gz::https://github.com/vllm-project/vllm/archive/refs/tags/v${pkgver}.tar.gz"
+  "vllm-gguf-plugin-${_gguf_plugin_ver}.tar.gz::https://github.com/vllm-project/vllm-gguf-plugin/archive/refs/tags/v${_gguf_plugin_ver}.tar.gz"
+  'requirements.lock'
+  'vllm.sh'
+)
+sha256sums=('e05c3cb35bcbc3d333b7d064b7711771de91ea38e2eab1445dcdd8b910c7ae8e'
+            'd2c05c0dd7200648e46fac84f60a765a7c0c7db04558c21e4a4826d75cf7b79e'
+            '04484d97791fb3e44009a7effe6d1eccba3edf40f21ed0f65dfa61143363b38d'
+            '94ad5112c8a238a0b569e1549fd672444ff8b4148e184c2a90babb9a6a6571f0')
+
+build() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+
+  local runtime="${srcdir}/runtime"
+  install -dm755 "${runtime}"
+  UV_CACHE_DIR="${srcdir}/uv-cache" uv pip install \
+    --python /usr/bin/python \
+    --target "${runtime}" \
+    --requirements "${srcdir}/requirements.lock" \
+    --no-deps \
+    --link-mode copy \
+    --torch-backend rocm7.2
+
+  local jobs="$(( $(nproc) / 2 ))"
+  (( jobs > 0 )) || jobs=1
+  export MAX_JOBS="${jobs}"
+  export VLLM_TARGET_DEVICE=rocm
+  export VLLM_VERSION_OVERRIDE="${pkgver}"
+  export PYTORCH_ROCM_ARCH=gfx1100
+  export PYTHONPATH="${runtime}"
+  export CC=/opt/rocm/llvm/bin/clang
+  export CXX=/opt/rocm/llvm/bin/clang++
+
+  python setup.py bdist_wheel --dist-dir=dist
+  UV_CACHE_DIR="${srcdir}/uv-cache" uv pip install \
+    --python /usr/bin/python \
+    --target "${runtime}" \
+    --no-deps \
+    --link-mode copy \
+    dist/*.whl
+
+  cd "${srcdir}/vllm-gguf-plugin-${_gguf_plugin_ver}"
+  python setup.py bdist_wheel --dist-dir=dist
+  UV_CACHE_DIR="${srcdir}/uv-cache" uv pip install \
+    --python /usr/bin/python \
+    --target "${runtime}" \
+    --no-deps \
+    --link-mode copy \
+    dist/*.whl
+}
+
+package() {
+  install -dm755 "${pkgdir}/opt/vllm/python" "${pkgdir}/usr/bin"
+  cp -a "${srcdir}/runtime/." "${pkgdir}/opt/vllm/python/"
+  find "${pkgdir}/opt/vllm/python" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
+  find "${pkgdir}/opt/vllm/python" -depth -type d -name '__pycache__' -empty -delete
+  find "${pkgdir}/opt/vllm/python" -path '*/vllm*.dist-info/direct_url.json' -delete
+  install -Dm755 "${srcdir}/vllm.sh" "${pkgdir}/usr/bin/vllm"
+}

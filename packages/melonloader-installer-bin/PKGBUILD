@@ -1,0 +1,48 @@
+pkgname=melonloader-installer-bin
+pkgver="4.3.0"
+pkgrel="1"
+pkgdesc="Installer for MelonLoader, the universal Unity mod loader"
+arch=('x86_64')
+url="https://github.com/LavaGang/MelonLoader.Installer"
+license=('Apache-2.0')
+depends=('gcc-libs' 'glibc' 'icu' 'openssl' 'fontconfig' 'libx11')
+provides=('melonloader-installer')
+conflicts=('melonloader-installer')
+options=('!strip' '!debug')
+
+source=(
+  "MelonLoader.Installer.Linux-${pkgver}::${url}/releases/download/${pkgver}/MelonLoader.Installer.Linux"
+  "LICENSE-${pkgver}.md::https://raw.githubusercontent.com/LavaGang/MelonLoader.Installer/${pkgver}/LICENSE.md"
+  "ML_Icon-${pkgver}.png::https://raw.githubusercontent.com/LavaGang/MelonLoader.Installer/${pkgver}/Resources/ML_Icon.png"
+)
+sha256sums=('57afe00626ae9de5f26e74b51e3eb86c8472d699404489b10c5dcb37460e15e5'
+            '7806ab77c1aea73efdd70ba37e5d85bcc36d31caf745488474b59588c455e8bd'
+            'c315d128a9ba1ba340dfc113e630f09fe09e3e156a8ae3aa86cef34fa3d768c7')
+noextract=("MelonLoader.Installer.Linux-${pkgver}")
+
+package() {
+  install -Dm755 "${srcdir}/MelonLoader.Installer.Linux-${pkgver}" \
+    "${pkgdir}/opt/melonloader-installer/MelonLoader.Installer.Linux"
+  install -dm755 "${pkgdir}/usr/bin"
+  ln -s /opt/melonloader-installer/MelonLoader.Installer.Linux \
+    "${pkgdir}/usr/bin/melonloader-installer"
+
+  install -Dm644 "${srcdir}/ML_Icon-${pkgver}.png" \
+    "${pkgdir}/usr/share/pixmaps/melonloader-installer.png"
+
+  install -Dm644 /dev/stdin \
+    "${pkgdir}/usr/share/applications/melonloader-installer.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=MelonLoader Installer
+Comment=Install and manage MelonLoader for Unity games
+Exec=melonloader-installer
+Icon=melonloader-installer
+Terminal=false
+Categories=Utility;Game;
+StartupWMClass=MelonLoader.Installer.Linux
+EOF
+
+  install -Dm644 "${srcdir}/LICENSE-${pkgver}.md" \
+    "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE.md"
+}

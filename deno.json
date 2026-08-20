@@ -1,6 +1,7 @@
 {
   "tasks": {
     "check": "deno run scripts/package.ts check",
+    "lock": "deno run scripts/package.ts lock",
     "update": "deno run scripts/package.ts update",
     "build": "deno run scripts/package.ts build",
     "install": "deno run scripts/package.ts install",

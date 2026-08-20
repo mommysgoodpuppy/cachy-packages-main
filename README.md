@@ -7,9 +7,11 @@ Current package definitions:
 - `visual-studio-code-bin`
 - `android-apktool`
 - `llama.cpp-hip`
+- `llama.cpp-vulkan`
 - `lmstudio-bin`
 - `openai-codex-bin`
 - `openai-chatgpt-desktop`
+- `python-vllm-rocm`
 - `steamvr-linux-fixes-layer-bin`
 - `t3-code`
 
@@ -97,6 +99,14 @@ archives are written to `repo/`. `src/` and `pkg/` build directories are removed
 Each package has a `PKGBUILD` and package-specific `package.ts` update logic. The root CLI reads
 the static alias export without executing updater code, so adding a package does not require editing
 `scripts/package.ts`.
+
+Packages with large language-specific dependency graphs may keep those dependencies in a reviewed
+lockfile and install them into a package-private prefix during `build()`. Primary sources remain in
+`source=()`, and `package()` remains offline. To regenerate a supported package's dependency lock:
+
+```bash
+deno task lock vllm
+```
 
 To build the reviewed, pinned package without installing:
 

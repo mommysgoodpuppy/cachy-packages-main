@@ -1,11 +1,16 @@
 import type { PackageModule } from "../../scripts/package-module.ts";
 import {
-  githubLatestReleaseTag,
+  fetchUserAgentHeaders,
   pkgbuildField,
   setPkgverAndResetPkgrel,
 } from "../../scripts/package-utils.ts";
 
 export const aliases = ["llama", "llama-hip"];
+
+type GithubRelease = {
+  tag_name?: unknown;
+  assets?: unknown;
+};
 
 const llamaCppHip: PackageModule = {
   aliases,
@@ -15,9 +20,31 @@ const llamaCppHip: PackageModule = {
   },
 
   async latestVersion(): Promise<string> {
-    const tag = await githubLatestReleaseTag("ggml-org/llama.cpp", "llama.cpp");
-    if (!/^b\d+$/.test(tag)) throw new Error("GitHub returned an invalid llama.cpp release tag");
-    return tag;
+    const response = await fetch(
+      "https://api.github.com/repos/ggml-org/llama.cpp/releases?per_page=100",
+      { headers: fetchUserAgentHeaders() },
+    );
+    if (!response.ok) {
+      throw new Error(`llama.cpp release lookup failed: HTTP ${response.status}`);
+    }
+
+    const releases: unknown = await response.json();
+    if (!Array.isArray(releases)) {
+      throw new Error("GitHub returned invalid llama.cpp releases");
+    }
+
+    for (const release of releases as GithubRelease[]) {
+      if (typeof release.tag_name !== "string" || !/^b\d+$/.test(release.tag_name)) continue;
+      if (!Array.isArray(release.assets)) continue;
+      const expectedAsset = `llama-${release.tag_name}-bin-ubuntu-rocm-7.2-x64.tar.gz`;
+      const hasRocmAsset = release.assets.some((asset: unknown) =>
+        asset !== null && typeof asset === "object" &&
+        (asset as { name?: unknown }).name === expectedAsset
+      );
+      if (hasRocmAsset) return release.tag_name;
+    }
+
+    throw new Error("No llama.cpp release with an Ubuntu ROCm 7.2 x64 archive was found");
   },
 
   updatePkgbuild(pkgbuild: string, latestVersion: string): string {

@@ -6,7 +6,7 @@ import {
 } from "../../scripts/package-utils.ts";
 
 const updateApiUrl = "https://windsurf-stable.codeium.com/api/update/linux-x64-deb/stable/latest";
-export const aliases: readonly string[] = [];
+export const aliases = ["devin"];
 
 let cachedUrl: string | null = null;
 

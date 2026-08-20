@@ -15,8 +15,11 @@ updating, building, and optionally installing them.
 - Each package should include a pinned `PKGBUILD` and package-specific `package.ts`. Export aliases
   as a one-line JSON string array: `export const aliases = ["example"]`.
 - Treat `.SRCINFO`, `src/`, `pkg/`, and `repo/` contents as generated output.
-- Pin upstream versions and checksums. Do not use dynamic download/install scripts.
-- Do not download during `package()`. All sources must be declared in `source=()`.
+- Pin primary upstream sources and checksums. Language-package dependencies may be downloaded during
+  `prepare()` or `build()` when their exact versions are recorded in a reviewed lockfile and they
+  are installed into a package-private prefix rather than the system language environment.
+- Keep `package()` offline. Primary source archives must be declared in `source=()`; locked
+  language-package dependencies do not need individual `source=()` entries.
 - Keep install logic minimal and auditable.
 - Prefer test-building packages in a clean disposable Arch environment before installing them on a
   real system.
@@ -164,6 +167,8 @@ Adjust the extraction only as needed for the actual archive format.
   integration unless the app genuinely needs them to work.
 - Do not add dynamic source discovery in `package()`.
 - Do not download anything in `package()`.
+- Do not resolve unpinned language-package dependency ranges during a package build. Regenerate and
+  review the lockfile explicitly when updating the parent package.
 - Do not copy AUR PKGBUILDs verbatim. Use them as references, then write the smallest auditable
   package for this repo.
 - Do not commit downloaded source artifacts, tarballs, `.deb` files, signatures, build outputs, or
