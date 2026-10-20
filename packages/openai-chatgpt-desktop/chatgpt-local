@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+
+: "${HOME:?HOME must be set}"
+codex_local_home=${CODEX_LOCAL_HOME:-"${HOME}/.codex-local"}
+
+if [ ! -f "${codex_local_home}/config.toml" ]; then
+  printf 'chatgpt-local: missing %s/config.toml\n' "${codex_local_home}" >&2
+  printf 'Generate the local configuration before launching ChatGPT Local.\n' >&2
+  exit 1
+fi
+
+for process_exe in /proc/[0-9]*/exe; do
+  executable=$(readlink "${process_exe}" 2>/dev/null) || continue
+  if [ "${executable}" = /usr/lib/chatgpt/ChatGPT ]; then
+    printf 'chatgpt-local: ChatGPT is already running; quit it before switching modes.\n' >&2
+    exit 1
+  fi
+done
+
+export CODEX_HOME="${codex_local_home}"
+exec /usr/lib/chatgpt/codex-launcher "$@"

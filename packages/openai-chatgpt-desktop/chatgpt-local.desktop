@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=ChatGPT Local
+Comment=ChatGPT with an isolated local-model configuration
+GenericName=Local AI assistant
+Exec=chatgpt-local %U
+Icon=chatgpt
+Type=Application
+StartupNotify=true
+StartupWMClass=ChatGPT
+Categories=Utility;Development;

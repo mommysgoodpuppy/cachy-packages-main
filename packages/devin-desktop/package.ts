@@ -46,14 +46,15 @@ const devinDesktop: PackageModule = {
     if (!cachedUrl) {
       return response;
     }
-    const sourceMatch = response.match(/^source=\(\n  "https:\/\/windsurf-stable\.codeiumdata\.com\/linux-x64-deb\/stable\/[^\/]+\/Devin-linux-x64-\$\{pkgver\}\.deb"\n\)$/m);
-    if (sourceMatch) {
-      return response.replace(
-        /^source=\(\n  "https:\/\/windsurf-stable\.codeiumdata\.com\/linux-x64-deb\/stable\/[^\/]+\/Devin-linux-x64-\$\{pkgver\}\.deb"\n\)$/m,
-        `source=(\n  "${cachedUrl}"\n)`
-      );
+    const sourcePattern =
+      /^source=\(\n  "https:\/\/windsurf-stable\.codeiumdata\.com\/linux-x64-deb\/stable\/[^\/]+\/Devin-linux-x64-(?:\$\{pkgver\}|\d+\.\d+\.\d+)\.deb"\n\)$/m;
+    if (!sourcePattern.test(response)) {
+      throw new Error("Devin Desktop PKGBUILD source did not match the expected URL");
     }
-    return response;
+    return response.replace(
+      sourcePattern,
+      `source=(\n  "${cachedUrl}"\n)`,
+    );
   },
 };
 

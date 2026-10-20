@@ -1,5 +1,5 @@
 pkgname=devin-desktop
-pkgver="3.5.17"
+pkgver="3.8.20"
 pkgrel="1"
 pkgdesc="A team of agents for every engineer — Devin Desktop"
 arch=('x86_64')
@@ -20,9 +20,9 @@ depends=(
 options=('!strip')
 
 source=(
-  "https://windsurf-stable.codeiumdata.com/linux-x64-deb/stable/2c489dfc762456657db8662309c0d5e76e886397/Devin-linux-x64-3.5.17.deb"
+  "https://windsurf-stable.codeiumdata.com/linux-x64-deb/stable/2d9020110aa91587b3c3b0fcf7d1faaf601fc7b8/Devin-linux-x64-3.8.20.deb"
 )
-sha256sums=('d5bfedb51e3325db91ab6450c11cf57171769548210b81960199afa5a286e954')
+sha256sums=('9036621091ac37ce5344689dc23a77ed3d6022018f60aec5a274d8b4a9919a28')
 
 package() {
   bsdtar -xf data.tar.xz -C "${pkgdir}"

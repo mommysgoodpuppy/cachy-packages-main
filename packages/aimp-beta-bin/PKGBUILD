@@ -1,0 +1,32 @@
+pkgname=aimp-beta-bin
+pkgver="6.00.3088beta7"
+pkgrel="1"
+_upstreamrel="1"
+pkgdesc="AIMP native Linux audio player (beta)"
+arch=('x86_64')
+url="https://www.aimp.ru/"
+license=('custom:Freeware')
+depends=(
+  'alsa-lib' 'cairo' 'curl' 'fontconfig' 'freetype2' 'gcc-libs' 'gdk-pixbuf2'
+  'glib2' 'glibc' 'gtk3' 'harfbuzz' 'libogg' 'libpipewire' 'libvorbis' 'libx11'
+  'openssl' 'pango' 'sqlite' 'zlib'
+)
+provides=("aimp=${pkgver}")
+conflicts=('aimp')
+options=('!strip' '!debug')
+source=("https://aimp.ru/files/desktop/builds/aimp-${pkgver}-${_upstreamrel}-x86_64.pkg.tar.zst")
+noextract=("aimp-${pkgver}-${_upstreamrel}-x86_64.pkg.tar.zst")
+sha256sums=('4d5cdab5e758490c57a62b10c6d6e9e2a049f250b64315c99904ec24b1cbf48f')
+
+package() {
+  # Reuse the upstream payload, without its metadata or install hooks.
+  bsdtar -xf "${srcdir}/aimp-${pkgver}-${_upstreamrel}-x86_64.pkg.tar.zst" \
+    -C "${pkgdir}" opt usr
+
+  # Upstream's install hook selects per-user settings; do that at packaging time.
+  printf '[System]\nUserMode=1\n' > "${pkgdir}/opt/aimp/AIMP.ini"
+  install -Dm644 "${pkgdir}/opt/aimp/System/FileFormats.xml" \
+    "${pkgdir}/usr/share/mime/packages/aimp.xml"
+
+  rm -r "${pkgdir}/usr/share/lintian" "${pkgdir}/usr/src"
+}

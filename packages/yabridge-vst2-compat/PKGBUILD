@@ -1,0 +1,74 @@
+pkgname=yabridge-vst2-compat
+pkgver="5.1.1.r41.gba7022df"
+pkgrel="2"
+pkgdesc="Pinned yabridge Wine window-embedding compatibility branch, x64 VST2 and VST3"
+arch=('x86_64')
+url="https://github.com/robbert-vdh/yabridge"
+license=('GPL-3.0-only')
+depends=('wine' 'gcc-libs' 'glibc' 'libxcb')
+makedepends=('meson' 'ninja' 'cmake' 'dbus')
+provides=('yabridge' 'yabridgectl')
+conflicts=('yabridge' 'yabridgectl' 'yabridge-bin' 'yabridge-git')
+options=('!strip' '!debug' '!lto')
+_commit=ba7022df0aee1e91cde62d7f0e940d3bc43a82b0
+source=(
+  "yabridge-ba7022df.tar.gz::https://github.com/robbert-vdh/yabridge/archive/ba7022df0aee1e91cde62d7f0e940d3bc43a82b0.tar.gz"
+  "yabridge-5.1.1.tar.gz::https://github.com/robbert-vdh/yabridge/releases/download/5.1.1/yabridge-5.1.1.tar.gz"
+  "asio.tar.gz::https://github.com/chriskohlhoff/asio/archive/ed6aa8a13d51dfc6c00ae453fc9fb7df5d6ea963.tar.gz"
+  "bitsery.tar.gz::https://github.com/fraillt/bitsery/archive/d1a47e06e2104b195a19c73b61f1d5c1dceaa228.tar.gz"
+  "function2.tar.gz::https://github.com/Naios/function2/archive/9e303865d14f1204f09379e37bbeb30c4375139a.tar.gz"
+  "ghc_filesystem.tar.gz::https://github.com/gulrak/filesystem/archive/8a2edd6d92ed820521d42c94d179462bf06b5ed3.tar.gz"
+  "tomlplusplus.tar.gz::https://github.com/marzer/tomlplusplus/archive/30172438cee64926dc41fdd9c11fb3ba5b2ba9de.tar.gz"
+  "vst3.tar.gz::https://github.com/robbert-vdh/vst3sdk/archive/refs/tags/v3.7.7_build_19-patched.tar.gz"
+  "vst3-base.tar.gz::https://github.com/steinbergmedia/vst3_base/archive/ea2bac9a109cce69ced21833fa6ff873dd6e368a.tar.gz"
+  "vst3-pluginterfaces.tar.gz::https://github.com/steinbergmedia/vst3_pluginterfaces/archive/bc5ff0f87aaa3cd28c114810f4f03c384421ad2c.tar.gz"
+  "vst3-public-sdk.tar.gz::https://github.com/steinbergmedia/vst3_public_sdk/archive/bbb0538535b171e805c8a8b612c2cd8a5f95738b.tar.gz"
+)
+sha256sums=('d9acb1c85a4c9c8d418d371046747a5a052e073436ae755de3b2627af9884c9a'
+            'd11f0307412b5566b09a75ed4aa191266db56d22f4de4d20e4fbde6296cd1a47'
+            '9d4619e1ea963d3c72c8dc07d5d8c9c4fab67141990b4f8cb10e5d8ad2c83f42'
+            '766e82e66c56dfa70f91728800428904028090aa3c6802c03eb1250e1fc1c401'
+            '698e86a5230567899422525cf7d53ef4bef5461eb1832b170a22a3d97b7eff78'
+            '3742a0d47da885da0e671008d72e7de5b7dbc3ccd3eed731166268b52e176cd4'
+            '291254ffe7f2433f90deef878d0d9335534a350a958ea23ecf511b7b2277bf7f'
+            '1bdc2790f912035246cbaf5446c39959ac13afe371be5810b8c3fd5c00cdd7f5'
+            'd74834b48b50dc3d92c47c43ca3f7e14847c54eab30850517a1f940319e50006'
+            'e32c2130afac93332b32761eeeede637607528c5962cc6490daf5125ee7d2ee9'
+            '662541a479d299e82a0f5151a3671918349a30b1d27e84d2c468bd0f6f1d2c39')
+
+prepare() {
+  cd "yabridge-${_commit}"
+  for name in asio bitsery function2 ghc_filesystem tomlplusplus vst3; do
+    mkdir -p "subprojects/${name}"
+    bsdtar -xf "${srcdir}/${name}.tar.gz" --strip-components=1 -C "subprojects/${name}"
+    if [[ -d "subprojects/packagefiles/${name}" ]]; then
+      cp -a "subprojects/packagefiles/${name}/." "subprojects/${name}/"
+    fi
+  done
+  for component in base pluginterfaces public-sdk; do
+    target="subprojects/vst3/${component/-sdk/.sdk}"
+    mkdir -p "$target"
+    bsdtar -xf "${srcdir}/vst3-${component}.tar.gz" --strip-components=1 -C "$target"
+  done
+}
+
+build() {
+  cd "yabridge-${_commit}"
+  meson setup build --buildtype=release --cross-file=cross-wine.conf \
+    --wrap-mode=nodownload --unity=on --unity-size=1000 \
+    -Dvst3=true -Dclap=false -Dbitbridge=false -Db_lto=false
+  meson compile -C build -j 4
+}
+
+package() {
+  cd "yabridge-${_commit}"
+  install -Dm755 build/libyabridge-vst2.so "${pkgdir}/usr/lib/libyabridge-vst2.so"
+  install -m755 build/libyabridge-chainloader-vst2.so "${pkgdir}/usr/lib/"
+  install -Dm755 build/libyabridge-vst3.so "${pkgdir}/usr/lib/libyabridge-vst3.so"
+  install -m755 build/libyabridge-chainloader-vst3.so "${pkgdir}/usr/lib/"
+  install -Dm755 build/yabridge-host.exe "${pkgdir}/usr/bin/yabridge-host.exe"
+  install -m755 build/yabridge-host.exe.so "${pkgdir}/usr/bin/"
+  # Only use the stable release's management utility, never its Wine hosts.
+  install -Dm755 "${srcdir}/yabridge/yabridgectl" "${pkgdir}/usr/bin/yabridgectl"
+  install -Dm644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"
+}

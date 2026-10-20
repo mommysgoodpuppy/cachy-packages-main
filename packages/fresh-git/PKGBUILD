@@ -1,0 +1,55 @@
+pkgname=fresh-git
+_commit="290496fc23df25cbe3672cac3067ee1477c5e84e"
+pkgver="0.4.10.r8725.g290496fc"
+pkgrel="1"
+pkgdesc="Fresh terminal text editor built from the upstream development branch"
+arch=('x86_64')
+url="https://github.com/sinelaw/fresh"
+license=('GPL-2.0-only')
+depends=('gcc-libs' 'glibc' 'xz')
+makedepends=('cargo' 'clang' 'rust')
+options=('!debug')
+
+source=("fresh-${_commit}.tar.gz::https://github.com/sinelaw/fresh/archive/${_commit}.tar.gz")
+sha256sums=('1baeb1b29ba4363ac8c1ea34ca1d11ba97b78b407f806b34b7e42f44c24cec80')
+
+prepare() {
+  cd "${srcdir}/fresh-${_commit}"
+
+  export CARGO_HOME="${srcdir}/cargo-home"
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "${srcdir}/fresh-${_commit}"
+
+  export CARGO_HOME="${srcdir}/cargo-home"
+  export CARGO_TARGET_DIR="${srcdir}/target"
+  export CARGO_NET_OFFLINE=true
+  export CC=clang
+  export FRESH_BUILD_CHANNEL=local-package
+  export CFLAGS="${CFLAGS:-} -ffile-prefix-map=${srcdir}=/usr/src/debug/${pkgname}"
+  export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=${srcdir}=/usr/src/debug/${pkgname}"
+  cargo build --frozen --release --package fresh-editor --bin fresh
+}
+
+package() {
+  cd "${srcdir}/fresh-${_commit}"
+
+  install -Dm755 "${srcdir}/target/release/fresh" \
+    "${pkgdir}/usr/share/${pkgname}/fresh-git"
+  install -dm755 "${pkgdir}/usr/bin"
+  ln -s "/usr/share/${pkgname}/fresh-git" "${pkgdir}/usr/bin/fresh-git"
+
+  install -Dm644 /dev/stdin \
+    "${pkgdir}/usr/share/${pkgname}/install-receipt.toml" <<EOF
+schema = 1
+channel = "local-package"
+version = "${pkgver}"
+package_name = "${pkgname}"
+managed = true
+self_update = false
+EOF
+
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

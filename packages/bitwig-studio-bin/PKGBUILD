@@ -1,0 +1,24 @@
+pkgname=bitwig-studio-bin
+# Licensed series: 6.0.x only. package.ts rejects other series and prereleases.
+pkgver="6.0.11"
+pkgrel="1"
+pkgdesc="Bitwig Studio native Linux binary (licensed 6.0 series)"
+arch=('x86_64')
+url="https://www.bitwig.com/"
+license=('custom:commercial')
+depends=(
+  'alsa-lib' 'cairo' 'fontconfig' 'freetype2' 'gcc-libs' 'glibc' 'gtk3'
+  'libglvnd' 'libpipewire' 'libx11' 'libxcb' 'libxcursor' 'libxext'
+  'libxi' 'libxkbcommon' 'libxkbcommon-x11' 'libxrender' 'libxtst'
+  'systemd-libs' 'vulkan-icd-loader' 'xcb-imdkit' 'xcb-util' 'xcb-util-wm'
+  'xdg-utils' 'zlib'
+)
+provides=("bitwig-studio=${pkgver}")
+conflicts=('bitwig-studio')
+options=('!strip' '!debug')
+source=("bitwig-studio-${pkgver}.deb::https://www.bitwig.com/dl/Bitwig%20Studio/${pkgver}/installer_linux/")
+sha256sums=('ae7aff67ccba9252ab536813e7f5d3fac46bca5fc7659674e27e7ae4bd073c4c')
+
+package() {
+  bsdtar -xf "${srcdir}/data.tar.zst" -C "${pkgdir}"
+}

@@ -1,6 +1,6 @@
 pkgname=llama.cpp-vulkan
 _pkgname="${pkgname%-vulkan}"
-pkgver="b10355"
+pkgver="b10516"
 pkgrel="1"
 pkgdesc="llama.cpp official Vulkan binary build"
 arch=('x86_64')
@@ -13,7 +13,7 @@ options=('!strip')
 backup=('etc/conf.d/llama.cpp')
 
 source=("llama-${pkgver}-bin-ubuntu-vulkan-x64.tar.gz::https://github.com/ggml-org/llama.cpp/releases/download/${pkgver}/llama-${pkgver}-bin-ubuntu-vulkan-x64.tar.gz")
-sha256sums=('46de2a4a9370c1cda6d4f6b5b618416ede1cb052b175bdf016d0f0f544a2da11')
+sha256sums=('5ce186720f43c415465869b0cd93973b828b219cbf6fbcc22aa899531973c505')
 
 package() {
   local release_dir="${srcdir}/llama-${pkgver}"

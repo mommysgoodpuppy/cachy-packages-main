@@ -1,217 +1,69 @@
 pkgname=openai-chatgpt-desktop
-pkgver="26.814.41407"
+pkgver="26.930.31730"
 pkgrel="1"
-pkgdesc="OpenAI ChatGPT desktop app repackaged from the upstream macOS Electron archive"
+pkgdesc="OpenAI ChatGPT desktop app repackaged from the official Linux binary"
 arch=('x86_64')
 url="https://chatgpt.com/download"
 license=('custom')
 depends=(
-  'electron39'
-  'openai-codex'
-  'python'
-  'hicolor-icon-theme'
+  'alsa-lib'
+  'at-spi2-core'
+  'cairo'
+  'dbus'
+  'expat'
+  'gcc-libs'
+  'gdk-pixbuf2'
+  'glib2'
+  'glibc'
+  'gtk3'
+  'libcups'
+  'libdrm'
+  'libglvnd'
+  'libnotify'
+  'libusb'
+  'libx11'
+  'libxcb'
+  'libxcomposite'
+  'libxdamage'
+  'libxext'
+  'libxfixes'
+  'libxkbcommon'
+  'libxrandr'
+  'mesa'
+  'nspr'
+  'nss'
+  'pango'
+  'systemd-libs'
+  'vulkan-driver'
   'xdg-utils'
+  'xz'
 )
-makedepends=(
-  'asar'
-  'libarchive'
-  'node-gyp'
-)
-conflicts=('openai-codex-desktop')
+provides=("chatgpt=${pkgver}")
+conflicts=('chatgpt' 'openai-codex-desktop')
 replaces=('openai-codex-desktop')
-options=('!strip')
-
-_electron_target=39.8.10
-_better_sqlite3_ver=12.9.0
-_node_pty_ver=1.1.0
-_node_addon_api_ver=8.5.0
+backup=('etc/apparmor.d/chatgpt')
+options=('!strip' '!debug')
 
 source=(
-  "ChatGPT-${pkgver}.zip::https://persistent.oaistatic.com/codex-app-prod/ChatGPT-darwin-arm64-${pkgver}.zip"
-  "electron-headers-${_electron_target}.tar.gz::https://electronjs.org/headers/v${_electron_target}/node-v${_electron_target}-headers.tar.gz"
-  "better-sqlite3-${_better_sqlite3_ver}.tgz::https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-${_better_sqlite3_ver}.tgz"
-  "node-pty-${_node_pty_ver}.tgz::https://registry.npmjs.org/node-pty/-/node-pty-${_node_pty_ver}.tgz"
-  "node-addon-api-${_node_addon_api_ver}.tgz::https://registry.npmjs.org/node-addon-api/-/node-addon-api-${_node_addon_api_ver}.tgz"
-  'patch-linux-desktop-id.mjs'
+  "chatgpt_${pkgver}_amd64.deb::https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${pkgver}_amd64.deb"
+  'chatgpt-local'
+  'codex-local'
+  'chatgpt-local.desktop'
 )
-noextract=(
-  "ChatGPT-${pkgver}.zip"
-  "better-sqlite3-${_better_sqlite3_ver}.tgz"
-  "node-pty-${_node_pty_ver}.tgz"
-  "node-addon-api-${_node_addon_api_ver}.tgz"
-)
-sha256sums=('5d199616b685d85a39264dc1659c761001c4af9addd090120021d2ea45a2db5c'
-            '61069dec76ed8d1c10ab6825b194bdf5a19b653286a7c2684b09c62681427446'
-            'ad0e29650140c49d0335b1d356596aa8166f12b758f418a98446130e3278f250'
-            'c7517f19083ddcb05f276904680eb2b11a6b5ecab778b8e4e5685a6d645b3f60'
-            'd12f07c8162283b6213551855f1da8dac162331374629830b5e640f130f07910'
-            '2a39939828ad1074912266be33c795698c95afd73097c8474769952d42992c26')
-
-prepare() {
-  cd "${srcdir}"
-  rm -rf app app-extracted app.asar app.asar.unpacked native-modules
-  mkdir app
-
-  bsdtar -xf "ChatGPT-${pkgver}.zip" -C app
-
-  local appdir
-  appdir="$(find app -maxdepth 4 -type d -name 'ChatGPT.app' ! -path '*/__MACOSX/*' -print -quit)"
-  [[ -n "${appdir}" ]] || {
-    echo "Could not find ChatGPT.app in upstream archive"
-    return 1
-  }
-
-  local resources_dir="${appdir}/Contents/Resources"
-  [[ -f "${resources_dir}/app.asar" ]] || {
-    echo "Could not find app.asar in upstream archive"
-    return 1
-  }
-
-  asar extract "${resources_dir}/app.asar" app-extracted
-  node "${srcdir}/patch-linux-desktop-id.mjs" app-extracted
-
-  local bs3_ver npty_ver
-  bs3_ver="$(node -p "require('${srcdir}/app-extracted/node_modules/better-sqlite3/package.json').version")"
-  npty_ver="$(node -p "require('${srcdir}/app-extracted/node_modules/node-pty/package.json').version")"
-  [[ "${bs3_ver}" == "${_better_sqlite3_ver}" ]] || {
-    echo "better-sqlite3 version mismatch: app=${bs3_ver}, pkgbuild=${_better_sqlite3_ver}"
-    return 1
-  }
-  [[ "${npty_ver}" == "${_node_pty_ver}" ]] || {
-    echo "node-pty version mismatch: app=${npty_ver}, pkgbuild=${_node_pty_ver}"
-    return 1
-  }
-
-  mkdir -p native-modules/node_modules
-  bsdtar -xf "better-sqlite3-${_better_sqlite3_ver}.tgz" -C native-modules/node_modules
-  mv native-modules/node_modules/package native-modules/node_modules/better-sqlite3
-  bsdtar -xf "node-pty-${_node_pty_ver}.tgz" -C native-modules/node_modules
-  mv native-modules/node_modules/package native-modules/node_modules/node-pty
-  bsdtar -xf "node-addon-api-${_node_addon_api_ver}.tgz" -C native-modules/node_modules
-  mv native-modules/node_modules/package native-modules/node_modules/node-addon-api
-
-  export npm_config_nodedir="${srcdir}/node_headers"
-  export npm_config_runtime=electron
-  export npm_config_target="${_electron_target}"
-  export npm_config_build_from_source=true
-
-  (cd native-modules/node_modules/better-sqlite3 && node-gyp rebuild --release)
-  (cd native-modules/node_modules/node-pty && node-gyp rebuild)
-
-  rm -rf app-extracted/node_modules/better-sqlite3 app-extracted/node_modules/node-pty
-  cp -a native-modules/node_modules/better-sqlite3 app-extracted/node_modules/
-  cp -a native-modules/node_modules/node-pty app-extracted/node_modules/
-
-  find app-extracted/node_modules/better-sqlite3 app-extracted/node_modules/node-pty \
-    -type f \( -name Makefile -o -name '*.mk' -o -name config.gypi \) -delete
-  find app-extracted/node_modules/better-sqlite3 app-extracted/node_modules/node-pty \
-    -type d -name .deps -prune -exec rm -rf '{}' +
-  rm -rf \
-    app-extracted/node_modules/better-sqlite3/build/Release/node-addon-api \
-    app-extracted/node_modules/better-sqlite3/build/Release/obj.target \
-    app-extracted/node_modules/node-pty/build/Release/node-addon-api \
-    app-extracted/node_modules/node-pty/build/Release/obj.target \
-    app-extracted/node_modules/node-pty/prebuilds
-  rm -f \
-    app-extracted/node_modules/better-sqlite3/build/Release/sqlite3.a \
-    app-extracted/node_modules/better-sqlite3/build/Release/test_extension.node
-
-  rm -rf app.asar.unpacked
-  find app-extracted -type d -name '*.dSYM' -prune -exec rm -rf '{}' +
-  find app-extracted -type f \( -name '*.dylib' -o -name 'sparkle.node' \) -delete
-  find app-extracted -path '*/prebuilds/*' -type f -name '*.node' \
-    ! \( -path '*/linux-x64/*' -o -path '*/HID-linux-x64/*' -o -path '*/HID_hidraw-linux-x64/*' \) \
-    -delete
-  find app-extracted -path '*/prebuilds/*' -type f -name '*musl*.node' -delete
-
-  asar pack app-extracted app.asar --unpack '{*.node,*.so,spawn-helper}'
-}
+noextract=("chatgpt_${pkgver}_amd64.deb")
+sha256sums=('e0174d8d0a5f4141145458c814f3c2d863dd67e942b868785a1f5dac9cba3e16'
+            '969f5302af803d3a70a7b7da5761f1154b36e56503713587bf101ff36cc5f2bd'
+            '9b94fb3e1a8a7e569a49191f32efa379bbf92612ebc901ff24a7d880ab082b46'
+            '63a359ce2f3ccb2f040113592e1711360ab9a7fc884f8e865e3f8de86d69b630')
 
 package() {
-  cd "${srcdir}"
+  bsdtar -xOf "${srcdir}/chatgpt_${pkgver}_amd64.deb" data.tar.xz |
+    bsdtar --no-same-owner -xJf - -C "${pkgdir}"
 
-  install -Dm644 app.asar "${pkgdir}/usr/lib/${pkgname}/resources/app.asar"
-  cp -a app.asar.unpacked "${pkgdir}/usr/lib/${pkgname}/resources/"
+  install -Dm755 "${srcdir}/chatgpt-local" "${pkgdir}/usr/bin/chatgpt-local"
+  install -Dm755 "${srcdir}/codex-local" "${pkgdir}/usr/bin/codex-local"
+  install -Dm644 "${srcdir}/chatgpt-local.desktop" \
+    "${pkgdir}/usr/share/applications/chatgpt-local.desktop"
 
-  if [[ -d app-extracted/webview ]]; then
-    mkdir -p "${pkgdir}/usr/lib/${pkgname}/content"
-    cp -a app-extracted/webview "${pkgdir}/usr/lib/${pkgname}/content/"
-  fi
-
-  install -Dm755 /dev/stdin "${pkgdir}/usr/bin/chatgpt-desktop" <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-appdir="/usr/lib/openai-chatgpt-desktop"
-webview_dir="${appdir}/content/webview"
-http_pid=""
-
-cleanup() {
-  [[ -n "${http_pid}" ]] && kill "${http_pid}" 2>/dev/null || true
-  [[ -n "${http_pid}" ]] && wait "${http_pid}" 2>/dev/null || true
-}
-trap cleanup EXIT HUP INT TERM
-
-export CODEX_CLI_PATH="${CODEX_CLI_PATH:-$(command -v codex || true)}"
-export BUILD_FLAVOR="${BUILD_FLAVOR:-prod}"
-export NODE_ENV="${NODE_ENV:-production}"
-export ELECTRON_RENDERER_URL="${ELECTRON_RENDERER_URL:-http://localhost:5176/}"
-
-if [[ -d "${webview_dir}" ]]; then
-  python - "${webview_dir}" <<'PY' >/dev/null 2>&1 &
-import http.server
-import os
-import socketserver
-import sys
-
-os.chdir(sys.argv[1])
-
-class Handler(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, fmt, *args):
-        pass
-
-    def end_headers(self):
-        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-        self.send_header("Pragma", "no-cache")
-        self.send_header("Expires", "0")
-        super().end_headers()
-
-class Server(socketserver.TCPServer):
-    allow_reuse_address = True
-
-with Server(("127.0.0.1", 5176), Handler) as server:
-    server.serve_forever()
-PY
-  http_pid=$!
-fi
-
-exec /usr/lib/electron39/electron \
-  --enable-sandbox \
-  --ozone-platform-hint=auto \
-  --class=ChatGPT \
-  "${appdir}/resources/app.asar" \
-  "$@"
-EOF
-
-  install -Dm644 "app/ChatGPT.app/Contents/Resources/icon-chatgpt.png" \
-    "${pkgdir}/usr/share/icons/hicolor/512x512/apps/openai-chatgpt-desktop.png"
-
-  install -Dm644 /dev/stdin "${pkgdir}/usr/share/applications/ChatGPT.desktop" <<'EOF'
-[Desktop Entry]
-Name=ChatGPT
-Comment=OpenAI ChatGPT desktop app
-Exec=chatgpt-desktop %U
-Icon=openai-chatgpt-desktop
-Terminal=false
-Type=Application
-Categories=Development;Utility;
-MimeType=x-scheme-handler/chatgpt;x-scheme-handler/codex;
-StartupNotify=true
-StartupWMClass=ChatGPT
-EOF
-
-  local notices
-  notices="$(find app -path '*/Contents/Resources/THIRD_PARTY_NOTICES.txt' ! -path '*/__MACOSX/*' -print -quit)"
-  [[ -n "${notices}" ]] && install -Dm644 "${notices}" \
-    "${pkgdir}/usr/share/licenses/${pkgname}/THIRD_PARTY_NOTICES.txt"
+  ln -s chatgpt "${pkgdir}/usr/bin/chatgpt-desktop"
 }

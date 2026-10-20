@@ -1,5 +1,5 @@
 pkgname=openai-codex-bin
-pkgver="0.145.0"
+pkgver="0.163.0"
 pkgrel="1"
 pkgdesc="OpenAI Codex CLI"
 arch=('x86_64')
@@ -9,19 +9,28 @@ provides=('openai-codex')
 conflicts=('openai-codex' 'openai-codex-autoup-bin')
 replaces=('openai-codex-autoup-bin')
 optdepends=(
+  'nodejs: enable the js_repl experimental tool'
   'git: for working with git repositories'
-  'ripgrep: accelerated large-repo search'
 )
 
 source=(
-  "codex-${pkgver}-x86_64.tar.gz::https://github.com/openai/codex/releases/download/rust-v${pkgver}/codex-x86_64-unknown-linux-musl.tar.gz"
+  "codex-package-${pkgver}-x86_64.tar.zst::https://github.com/openai/codex/releases/download/rust-v${pkgver}/codex-package-x86_64-unknown-linux-musl.tar.zst"
+  "codex-responses-api-proxy-${pkgver}-x86_64.tar.gz::https://github.com/openai/codex/releases/download/rust-v${pkgver}/codex-responses-api-proxy-x86_64-unknown-linux-musl.tar.gz"
   "LICENSE-${pkgver}::https://raw.githubusercontent.com/openai/codex/rust-v${pkgver}/LICENSE"
 )
-sha256sums=('bfaf13c9ba34f2ad764e4a916c49cf7177aeba329cf0f719e2227566fc8d662a'
+noextract=("codex-package-${pkgver}-x86_64.tar.zst")
+sha256sums=('df22dac1f24b7927e817e8b113067fbe1caa586aba7554247fabd49464cf9c96'
+            'c52b868d779cc1f5fb6b79dbcefbca70869cd7abc158843cdcaa35979873e5a5'
             'd17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc')
 
 package() {
-  install -Dm755 "${srcdir}/codex-x86_64-unknown-linux-musl" "${pkgdir}/usr/bin/codex"
+  # Codex needs its upstream package layout (codex-package.json, bin/, codex-resources/, codex-path/)
+  # to find bundled helpers and to install the app-server daemon.
+  install -dm755 "${pkgdir}/usr/lib/openai-codex"
+  bsdtar -xf "${srcdir}/codex-package-${pkgver}-x86_64.tar.zst" --no-same-owner -C "${pkgdir}/usr/lib/openai-codex"
+  install -dm755 "${pkgdir}/usr/bin"
+  ln -s /usr/lib/openai-codex/bin/codex "${pkgdir}/usr/bin/codex"
+  install -Dm755 "${srcdir}/codex-responses-api-proxy-x86_64-unknown-linux-musl" "${pkgdir}/usr/bin/codex-responses-api-proxy"
   install -Dm644 "${srcdir}/LICENSE-${pkgver}" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 
   install -dm755 \
@@ -31,11 +40,11 @@ package() {
     "${pkgdir}/usr/share/elvish/lib" \
     "${pkgdir}/usr/share/powershell/Completions"
 
-  "${pkgdir}/usr/bin/codex" completion bash >codex.bash
-  "${pkgdir}/usr/bin/codex" completion zsh >codex.zsh
-  "${pkgdir}/usr/bin/codex" completion fish >codex.fish
-  "${pkgdir}/usr/bin/codex" completion elvish >codex.elvish
-  "${pkgdir}/usr/bin/codex" completion powershell >codex.ps1
+  "${pkgdir}/usr/lib/openai-codex/bin/codex" completion bash >codex.bash
+  "${pkgdir}/usr/lib/openai-codex/bin/codex" completion zsh >codex.zsh
+  "${pkgdir}/usr/lib/openai-codex/bin/codex" completion fish >codex.fish
+  "${pkgdir}/usr/lib/openai-codex/bin/codex" completion elvish >codex.elvish
+  "${pkgdir}/usr/lib/openai-codex/bin/codex" completion powershell >codex.ps1
 
   install -Dm644 codex.bash "${pkgdir}/usr/share/bash-completion/completions/codex"
   install -Dm644 codex.zsh "${pkgdir}/usr/share/zsh/site-functions/_codex"
