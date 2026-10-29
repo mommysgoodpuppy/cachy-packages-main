@@ -1,5 +1,5 @@
 pkgname=openai-codex-bin
-pkgver="0.163.0"
+pkgver="0.165.0"
 pkgrel="1"
 pkgdesc="OpenAI Codex CLI"
 arch=('x86_64')
@@ -19,8 +19,8 @@ source=(
   "LICENSE-${pkgver}::https://raw.githubusercontent.com/openai/codex/rust-v${pkgver}/LICENSE"
 )
 noextract=("codex-package-${pkgver}-x86_64.tar.zst")
-sha256sums=('df22dac1f24b7927e817e8b113067fbe1caa586aba7554247fabd49464cf9c96'
-            'c52b868d779cc1f5fb6b79dbcefbca70869cd7abc158843cdcaa35979873e5a5'
+sha256sums=('ff05c15fd63a0734b0b4231bc4dddf0c59af06dca79c0a5e7c55f9768db1a92c'
+            'c8c716be3a23a3ea7dabfcbd285ce4068c485dcd6052fff319e736453af0b136'
             'd17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc')
 
 package() {

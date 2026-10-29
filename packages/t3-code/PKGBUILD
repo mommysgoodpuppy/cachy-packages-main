@@ -1,5 +1,5 @@
 pkgname=t3-code
-pkgver="0.0.43.nightly.20260919.1962"
+pkgver="0.1.6.nightly.20261029.3892"
 pkgrel="1"
 pkgdesc="Minimal web GUI for coding agents (nightly build)"
 arch=('x86_64')
@@ -17,7 +17,7 @@ source=(
   "LICENSE-${_release_tag}::https://raw.githubusercontent.com/pingdotgg/t3code/${_release_tag}/LICENSE"
   "t3-code.png::https://raw.githubusercontent.com/pingdotgg/t3code/${_release_tag}/assets/nightly/nightly-universal-1024.png"
 )
-sha256sums=('5d8c43b18179322084d5857852568d3c729e239dfb5494c2d39db2ef59bfa435'
+sha256sums=('87618fa82c6dc97fedbd925dd06f31de93662b1e1d0a692d4138c4a4756a4a20'
             '935d8f2af0c703f9c39517ee57cc4930b19d02d533be930b63f0e82f93614b43'
             '7e59b6394016ef83ed1e946847769e01bf36d4062c5c5af2577fd3e228285fd9')
 

@@ -1,5 +1,5 @@
 pkgname=openai-chatgpt-desktop
-pkgver="26.930.31730"
+pkgver="26.1023.51421"
 pkgrel="1"
 pkgdesc="OpenAI ChatGPT desktop app repackaged from the official Linux binary"
 arch=('x86_64')
@@ -51,7 +51,7 @@ source=(
   'chatgpt-local.desktop'
 )
 noextract=("chatgpt_${pkgver}_amd64.deb")
-sha256sums=('e0174d8d0a5f4141145458c814f3c2d863dd67e942b868785a1f5dac9cba3e16'
+sha256sums=('4484dc2b54fc0978beb23b8d8d717494e4e0b4fbeab0a876739105e50b44de5a'
             '969f5302af803d3a70a7b7da5761f1154b36e56503713587bf101ff36cc5f2bd'
             '9b94fb3e1a8a7e569a49191f32efa379bbf92612ebc901ff24a7d880ab082b46'
             '63a359ce2f3ccb2f040113592e1711360ab9a7fc884f8e865e3f8de86d69b630')

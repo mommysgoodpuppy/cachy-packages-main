@@ -1,5 +1,5 @@
 pkgname=fresh-editor-bin
-pkgver="0.5.2"
+pkgver="0.5.4"
 pkgrel="1"
 pkgdesc="Fast terminal text editor with LSP support and TypeScript plugins"
 arch=('x86_64')
@@ -13,7 +13,7 @@ options=('!debug')
 source=(
   "fresh-editor-${pkgver}-x86_64.tar.xz::https://github.com/sinelaw/fresh/releases/download/v${pkgver}/fresh-editor-x86_64-unknown-linux-gnu.tar.xz"
 )
-sha256sums=('d7c6600cdd5c813bcd118d84fbcc0559fe9396756a46fd0b7b0c1bf6c5cf8fd6')
+sha256sums=('e3599c93b1eece4700d7c30726b461c9b962a91bee5da31cdf44e3dffeb6206c')
 
 package() {
   local release_dir="${srcdir}/fresh-editor-x86_64-unknown-linux-gnu"
